@@ -5,7 +5,7 @@ Werkzeug==3.0.3
 # HTTP requests
 requests==2.32.3
 
-# Face emotion (no TensorFlow needed)
+# Face emotion
 deepface==0.0.89
 opencv-python-headless==4.9.0.80
 
@@ -13,6 +13,6 @@ opencv-python-headless==4.9.0.80
 python-dotenv==1.0.1
 gunicorn==22.0.0
 
-# Image processing
-Pillow==10.3.0
-numpy==1.26.4
+# Image processing (updated versions)
+Pillow==10.4.0
+numpy==2.1.0
