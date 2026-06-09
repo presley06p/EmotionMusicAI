@@ -16,7 +16,7 @@ from flask import (
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from database.db import init_db, get_db
+from database.db import init_db, get_db, close_db
 from models.emotion_model import analyze_text_emotion
 from models.face_detection import analyze_face_emotion
 from spotify.spotify_api import (
