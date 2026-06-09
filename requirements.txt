@@ -1,0 +1,29 @@
+# ── Core Framework ────────────────────────────────────────────────────────
+Flask==3.0.3
+Werkzeug==3.0.3
+
+# ── Database ──────────────────────────────────────────────────────────────
+# SQLite is built into Python — no extra package needed
+
+# ── HTTP / API requests ───────────────────────────────────────────────────
+requests==2.32.3
+
+# ── AI / ML (Facial Emotion) ──────────────────────────────────────────────
+# Install one or both:
+fer==22.5.1                      # FER with TensorFlow backend
+tensorflow==2.15.0               # Required by FER
+opencv-python-headless==4.9.0.80 # OpenCV (headless for servers)
+# deepface==0.0.89               # Alternative deep learning backend (optional)
+
+# ── AI / ML (Text Emotion) ────────────────────────────────────────────────
+# Optional: enables transformer-based classification (much more accurate)
+# transformers==4.40.2
+# torch==2.2.2
+
+# ── Utilities ─────────────────────────────────────────────────────────────
+python-dotenv==1.0.1
+gunicorn==22.0.0                 # Production server
+
+# ── Image processing ─────────────────────────────────────────────────────
+Pillow==10.3.0
+numpy==1.26.4

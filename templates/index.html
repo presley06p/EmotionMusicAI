@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% block title %}EmoTune AI — Music Powered by Your Emotions{% endblock %}
+
+{% block content %}
+
+<!-- ── Hero ──────────────────────────────────────────────────────────────── -->
+<section class="hero-section">
+  <div class="hero-bg-grid"></div>
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+  <div class="hero-orb hero-orb-3"></div>
+
+  <div class="container hero-content">
+    <div class="row align-items-center min-vh-100">
+      <div class="col-lg-6 hero-text">
+        <div class="hero-badge">
+          <span class="pulse-dot"></span>
+          AI-Powered Emotion Detection
+        </div>
+        <h1 class="hero-title">
+          Music that<br/>
+          <span class="gradient-text">feels you.</span>
+        </h1>
+        <p class="hero-subtitle">
+          EmoTune AI reads your face or text to detect your current emotion,
+          then curates a perfect Spotify playlist—automatically.
+        </p>
+        <div class="hero-actions">
+          {% if session.get('user_id') %}
+            <a href="{{ url_for('detect') }}" class="btn btn-accent btn-lg hero-cta">
+              <i class="bi bi-emoji-smile me-2"></i>Start Detection
+            </a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-glass btn-lg">
+              <i class="bi bi-grid-1x2 me-2"></i>Dashboard
+            </a>
+          {% else %}
+            <a href="{{ url_for('register') }}" class="btn btn-accent btn-lg hero-cta">
+              <i class="bi bi-rocket-takeoff me-2"></i>Get Started Free
+            </a>
+            <a href="{{ url_for('login') }}" class="btn btn-glass btn-lg">
+              <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+            </a>
+          {% endif %}
+        </div>
+        <div class="hero-stats">
+          <div class="stat-pill"><span>7</span> Emotions</div>
+          <div class="stat-pill"><span>∞</span> Playlists</div>
+          <div class="stat-pill"><span>AI</span> Powered</div>
+        </div>
+      </div>
+
+      <div class="col-lg-6 hero-visual">
+        <div class="emotion-orb-container">
+          <div class="emotion-ring ring-1"></div>
+          <div class="emotion-ring ring-2"></div>
+          <div class="emotion-ring ring-3"></div>
+          <div class="emotion-core">
+            <div class="emotion-face" id="heroFace">😊</div>
+            <div class="emotion-label" id="heroLabel">Happy</div>
+          </div>
+          <div class="floating-note note-1">♪</div>
+          <div class="floating-note note-2">♫</div>
+          <div class="floating-note note-3">♬</div>
+          <div class="floating-note note-4">♩</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── How It Works ───────────────────────────────────────────────────────── -->
+<section class="how-section section-pad">
+  <div class="container">
+    <div class="section-header text-center">
+      <div class="section-badge">Simple Process</div>
+      <h2 class="section-title">How it <span class="gradient-text">works</span></h2>
+      <p class="section-subtitle">Three steps between you and the perfect soundtrack</p>
+    </div>
+
+    <div class="row g-4 mt-3">
+      <div class="col-md-4">
+        <div class="step-card glass-card">
+          <div class="step-number">01</div>
+          <div class="step-icon-wrap">
+            <i class="bi bi-camera-video-fill"></i>
+          </div>
+          <h3 class="step-title">Detect Emotion</h3>
+          <p class="step-desc">Use your webcam for real-time facial analysis, or type how you feel in the text box.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="step-card glass-card step-card--mid">
+          <div class="step-number">02</div>
+          <div class="step-icon-wrap">
+            <i class="bi bi-cpu-fill"></i>
+          </div>
+          <h3 class="step-title">AI Analysis</h3>
+          <p class="step-desc">Our ML model classifies 7 distinct emotions with confidence scoring in milliseconds.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="step-card glass-card">
+          <div class="step-number">03</div>
+          <div class="step-icon-wrap">
+            <i class="bi bi-spotify"></i>
+          </div>
+          <h3 class="step-title">Get Music</h3>
+          <p class="step-desc">Spotify tracks perfectly matched to your mood stream directly in the browser.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Features ───────────────────────────────────────────────────────────── -->
+<section class="features-section section-pad">
+  <div class="container">
+    <div class="section-header text-center">
+      <div class="section-badge">Capabilities</div>
+      <h2 class="section-title">Everything you <span class="gradient-text">need</span></h2>
+    </div>
+
+    <div class="row g-4 mt-3">
+      {% set features = [
+        ("camera-video","Facial Detection","Live webcam stream processed by FER + MTCNN for real-time emotion analysis.","#1DB954"),
+        ("chat-text","Text Analysis","NLP classifies your typed feelings into 7 emotions with explanation.","#1E90FF"),
+        ("music-note-list","Spotify Playlists","Dynamically fetched tracks matched to your exact emotional state.","#FF6B6B"),
+        ("graph-up-arrow","Mood Analytics","Charts and trends showing your emotional patterns over time.","#FFD700"),
+        ("journal-bookmark","Mood Journal","Write private notes tagged with your current emotion.","#A78BFA"),
+        ("heart-fill","Save Favourites","Bookmark songs and revisit recommendations any time.","#F472B6"),
+      ] %}
+      {% for icon, title, desc, color in features %}
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card glass-card h-100">
+          <div class="feature-icon" style="--feature-color: {{ color }};">
+            <i class="bi bi-{{ icon }}"></i>
+          </div>
+          <h4 class="feature-title">{{ title }}</h4>
+          <p class="feature-desc">{{ desc }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ── Emotion Map ─────────────────────────────────────────────────────────── -->
+<section class="emotion-map-section section-pad">
+  <div class="container">
+    <div class="section-header text-center">
+      <div class="section-badge">Emotion × Music</div>
+      <h2 class="section-title">Every feeling has a <span class="gradient-text">sound</span></h2>
+    </div>
+
+    <div class="emotion-grid mt-5">
+      {% set emo_data = [
+        ("😊","Happy","Pop, Dance, Upbeat","#1DB954"),
+        ("😢","Sad","Acoustic, Ballads","#1E90FF"),
+        ("😠","Angry","Rock, Metal, Punk","#FF4444"),
+        ("😨","Fear","Ambient, Calm Instrumental","#9B59B6"),
+        ("❤️","Love","Romantic, Soul, R&B","#FF6B9D"),
+        ("😮","Surprise","Eclectic, Indie, Jazz","#FFD700"),
+        ("😐","Neutral","Top Charts, Trending","#00D4AA"),
+      ] %}
+      {% for emoji, label, genres, color in emo_data %}
+      <div class="emo-tile" style="--emo-color: {{ color }};">
+        <div class="emo-emoji">{{ emoji }}</div>
+        <div class="emo-label">{{ label }}</div>
+        <div class="emo-genres">{{ genres }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ────────────────────────────────────────────────────────────────── -->
+<section class="cta-section section-pad">
+  <div class="container text-center">
+    <div class="cta-card glass-card">
+      <div class="cta-orb"></div>
+      <h2 class="cta-title">Ready to discover your sound?</h2>
+      <p class="cta-subtitle">Join thousands of users letting AI soundtrack their emotions.</p>
+      {% if session.get('user_id') %}
+        <a href="{{ url_for('detect') }}" class="btn btn-accent btn-lg mt-3">
+          <i class="bi bi-play-circle me-2"></i>Open Detector
+        </a>
+      {% else %}
+        <a href="{{ url_for('register') }}" class="btn btn-accent btn-lg mt-3">
+          <i class="bi bi-person-plus me-2"></i>Create Free Account
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Cycle hero emotion display
+  const emotions = [
+    {face:"😊", label:"Happy",    color:"#1DB954"},
+    {face:"😢", label:"Sad",      color:"#1E90FF"},
+    {face:"😠", label:"Angry",    color:"#FF4444"},
+    {face:"😨", label:"Fear",     color:"#9B59B6"},
+    {face:"❤️", label:"Love",     color:"#FF6B9D"},
+    {face:"😮", label:"Surprise", color:"#FFD700"},
+    {face:"😐", label:"Neutral",  color:"#00D4AA"},
+  ];
+  let eIdx = 0;
+  const faceEl  = document.getElementById("heroFace");
+  const labelEl = document.getElementById("heroLabel");
+  const core    = document.querySelector(".emotion-core");
+
+  function cycleEmotion() {
+    eIdx = (eIdx + 1) % emotions.length;
+    const e = emotions[eIdx];
+    faceEl.style.opacity  = 0;
+    labelEl.style.opacity = 0;
+    setTimeout(() => {
+      faceEl.textContent  = e.face;
+      labelEl.textContent = e.label;
+      core.style.setProperty("--core-color", e.color);
+      faceEl.style.opacity  = 1;
+      labelEl.style.opacity = 1;
+    }, 300);
+  }
+  setInterval(cycleEmotion, 2200);
+</script>
+{% endblock %}

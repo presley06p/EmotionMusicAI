@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Create Account — EmoTune AI{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+  <div class="auth-bg-orb auth-orb-1"></div>
+  <div class="auth-bg-orb auth-orb-2"></div>
+
+  <div class="container">
+    <div class="row justify-content-center align-items-center min-vh-100">
+      <div class="col-md-5 col-lg-4">
+
+        <div class="auth-card glass-card">
+          <div class="auth-brand text-center mb-4">
+            <div class="auth-logo-icon">◈</div>
+            <h1 class="auth-title">Get started</h1>
+            <p class="auth-subtitle">Create your EmoTune AI account</p>
+          </div>
+
+          <form method="POST" action="{{ url_for('register') }}" novalidate id="registerForm">
+
+            <div class="form-group-ai mb-3">
+              <label class="form-label-ai">Username</label>
+              <div class="input-icon-wrap">
+                <i class="bi bi-at input-icon"></i>
+                <input
+                  type="text" name="username" id="usernameInput"
+                  class="form-control-ai"
+                  placeholder="cooluser99"
+                  required minlength="3" autocomplete="username"
+                />
+              </div>
+            </div>
+
+            <div class="form-group-ai mb-3">
+              <label class="form-label-ai">Email address</label>
+              <div class="input-icon-wrap">
+                <i class="bi bi-envelope input-icon"></i>
+                <input
+                  type="email" name="email"
+                  class="form-control-ai"
+                  placeholder="you@example.com"
+                  required autocomplete="email"
+                />
+              </div>
+            </div>
+
+            <div class="form-group-ai mb-2">
+              <label class="form-label-ai">Password</label>
+              <div class="input-icon-wrap">
+                <i class="bi bi-lock input-icon"></i>
+                <input
+                  type="password" name="password" id="regPassword"
+                  class="form-control-ai"
+                  placeholder="Min 8 characters"
+                  required minlength="8" autocomplete="new-password"
+                  oninput="checkStrength(this.value)"
+                />
+                <button type="button" class="input-eye" onclick="togglePw('regPassword', this)">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
+              <!-- Password strength meter -->
+              <div class="pw-strength mt-2">
+                <div class="pw-bar" id="pwBar"></div>
+              </div>
+              <div class="pw-label" id="pwLabel"></div>
+            </div>
+
+            <button type="submit" class="btn btn-accent w-100 btn-auth mt-3">
+              <i class="bi bi-person-plus me-2"></i>Create Account
+            </button>
+          </form>
+
+          <div class="auth-divider"><span>or</span></div>
+
+          <p class="auth-switch text-center">
+            Already have an account?
+            <a href="{{ url_for('login') }}" class="auth-link">Sign in</a>
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  const icon = btn.querySelector('i');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  icon.className = inp.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+}
+
+function checkStrength(pw) {
+  const bar   = document.getElementById('pwBar');
+  const label = document.getElementById('pwLabel');
+  let score = 0;
+  if (pw.length >= 8)  score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+  const levels = [
+    {pct:'25%', color:'#FF4444', text:'Weak'},
+    {pct:'50%', color:'#FF9900', text:'Fair'},
+    {pct:'75%', color:'#FFD700', text:'Good'},
+    {pct:'100%',color:'#1DB954', text:'Strong'},
+  ];
+  const lvl = levels[Math.max(0, score - 1)];
+  bar.style.width = lvl.pct;
+  bar.style.background = lvl.color;
+  label.textContent = lvl.text;
+  label.style.color = lvl.color;
+}
+</script>
+{% endblock %}

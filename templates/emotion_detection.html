@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% block title %}Detect Emotion — EmoTune AI{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/detect.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div class="detect-page">
+  <div class="detect-bg-grid"></div>
+
+  <div class="container py-5">
+    <!-- Page header -->
+    <div class="detect-header text-center mb-5">
+      <div class="section-badge mb-3">
+        <span class="pulse-dot"></span> Live Detection
+      </div>
+      <h1 class="detect-title">How are you <span class="gradient-text">feeling?</span></h1>
+      <p class="detect-subtitle">Let AI read your face or text — we'll find your perfect playlist.</p>
+    </div>
+
+    <!-- Mode tabs -->
+    <div class="detect-tabs mb-5">
+      <button class="dtab dtab--active" id="tabFace" onclick="switchTab('face')">
+        <i class="bi bi-camera-video me-2"></i>Facial Detection
+      </button>
+      <button class="dtab" id="tabText" onclick="switchTab('text')">
+        <i class="bi bi-chat-text me-2"></i>Text Analysis
+      </button>
+    </div>
+
+    <!-- ── FACE TAB ─────────────────────────────────────────────────────── -->
+    <div id="panelFace" class="detect-panel">
+      <div class="row g-4 align-items-start">
+
+        <!-- Webcam -->
+        <div class="col-lg-6">
+          <div class="glass-card webcam-card">
+            <div class="webcam-header">
+              <span class="cam-status-dot" id="camDot"></span>
+              <span id="camStatusText">Camera off</span>
+              <div class="ms-auto d-flex gap-2">
+                <button class="btn-icon" id="btnStartCam" onclick="startCamera()">
+                  <i class="bi bi-camera-video-fill"></i> Start
+                </button>
+                <button class="btn-icon btn-icon--danger" id="btnStopCam" onclick="stopCamera()" style="display:none;">
+                  <i class="bi bi-stop-circle"></i> Stop
+                </button>
+              </div>
+            </div>
+
+            <div class="webcam-viewport">
+              <video id="videoEl" autoplay muted playsinline></video>
+              <canvas id="canvasEl"></canvas>
+              <div class="cam-overlay" id="camOverlay">
+                <div class="cam-placeholder">
+                  <i class="bi bi-camera-video-off"></i>
+                  <p>Click <strong>Start</strong> to enable webcam</p>
+                </div>
+              </div>
+              <!-- Face box overlay -->
+              <div class="face-box" id="faceBox" style="display:none;"></div>
+            </div>
+
+            <div class="webcam-controls">
+              <button class="btn btn-accent w-100" id="btnCapture" onclick="captureAndAnalyze()" disabled>
+                <i class="bi bi-lightning-charge me-2"></i>Analyse Emotion
+              </button>
+              <label class="form-check mt-2 text-center">
+                <input type="checkbox" id="autoDetect" class="form-check-input" />
+                <span class="form-check-label small">Auto-detect every 3s</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Face result -->
+        <div class="col-lg-6">
+          <div class="glass-card result-card" id="faceResult" style="display:none;">
+            <div class="result-header">
+              <span class="result-label">Detected Emotion</span>
+              <span class="result-method-badge" id="faceMethodBadge"></span>
+            </div>
+            <div class="result-emotion-display">
+              <div class="result-emoji" id="faceEmoji">😊</div>
+              <div class="result-emotion-name" id="faceEmotionName">Happy</div>
+              <div class="confidence-ring-wrap">
+                <svg class="conf-ring" viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6"/>
+                  <circle cx="40" cy="40" r="34" fill="none" stroke="var(--accent)" stroke-width="6"
+                    stroke-linecap="round" stroke-dasharray="213.6"
+                    stroke-dashoffset="213.6" id="faceConfRing"
+                    style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset 0.8s ease;"/>
+                </svg>
+                <div class="conf-pct" id="faceConfPct">0%</div>
+              </div>
+            </div>
+            <!-- All-scores bars -->
+            <div class="emotion-bars" id="faceEmoBars"></div>
+          </div>
+
+          <div class="glass-card result-placeholder" id="facePlaceholder">
+            <i class="bi bi-emoji-sunglasses"></i>
+            <p>Detection results will appear here</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TEXT TAB ─────────────────────────────────────────────────────── -->
+    <div id="panelText" class="detect-panel" style="display:none;">
+      <div class="row g-4 align-items-start">
+
+        <!-- Input -->
+        <div class="col-lg-6">
+          <div class="glass-card text-input-card">
+            <div class="text-input-header">
+              <i class="bi bi-chat-quote me-2"></i>Describe your feeling
+            </div>
+            <textarea
+              id="textInput"
+              class="emotion-textarea"
+              placeholder="e.g. I'm feeling really excited about my new project…"
+              rows="6"
+            ></textarea>
+            <div class="text-input-footer">
+              <span class="char-count" id="charCount">0 / 500</span>
+              <div class="d-flex gap-2">
+                <button class="btn btn-glass btn-sm" onclick="clearText()">
+                  <i class="bi bi-x-circle me-1"></i>Clear
+                </button>
+                <button class="btn btn-accent" id="btnAnalyzeText" onclick="analyzeText()">
+                  <i class="bi bi-cpu me-2"></i>Analyse
+                </button>
+              </div>
+            </div>
+
+            <!-- Quick prompts -->
+            <div class="quick-prompts mt-3">
+              <div class="quick-label">Try a prompt:</div>
+              <div class="quick-chips">
+                <button class="chip" onclick="setPrompt('I am feeling very happy and excited today!')">😊 Happy</button>
+                <button class="chip" onclick="setPrompt('I feel so lonely and empty inside.')">😢 Sad</button>
+                <button class="chip" onclick="setPrompt('I am so angry and frustrated right now!')">😠 Angry</button>
+                <button class="chip" onclick="setPrompt('I feel deeply in love with everything around me.')">❤️ Love</button>
+                <button class="chip" onclick="setPrompt('I am anxious and nervous about what happens next.')">😨 Fear</button>
+                <button class="chip" onclick="setPrompt('Wow, I cannot believe what just happened!')">😮 Surprise</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Text result -->
+        <div class="col-lg-6">
+          <div class="glass-card result-card" id="textResult" style="display:none;">
+            <div class="result-header">
+              <span class="result-label">Text Analysis</span>
+              <span class="result-method-badge" id="textMethodBadge"></span>
+            </div>
+            <div class="result-emotion-display">
+              <div class="result-emoji" id="textEmoji">😊</div>
+              <div class="result-emotion-name" id="textEmotionName">Happy</div>
+              <div class="confidence-ring-wrap">
+                <svg class="conf-ring" viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6"/>
+                  <circle cx="40" cy="40" r="34" fill="none" stroke="var(--accent)" stroke-width="6"
+                    stroke-linecap="round" stroke-dasharray="213.6"
+                    stroke-dashoffset="213.6" id="textConfRing"
+                    style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset 0.8s ease;"/>
+                </svg>
+                <div class="conf-pct" id="textConfPct">0%</div>
+              </div>
+            </div>
+            <div class="result-explanation" id="textExplanation"></div>
+            <div class="emotion-bars" id="textEmoBars"></div>
+          </div>
+
+          <div class="glass-card result-placeholder" id="textPlaceholder">
+            <i class="bi bi-keyboard"></i>
+            <p>Your emotion analysis appears here</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Loading Spinner ─────────────────────────────────────────────── -->
+    <div class="detect-loading" id="detectLoading" style="display:none;">
+      <div class="ai-spinner">
+        <div class="spin-ring"></div>
+        <div class="spin-core">AI</div>
+      </div>
+      <p id="loadingText">Analysing…</p>
+    </div>
+
+    <!-- ── Music Recommendations ──────────────────────────────────────── -->
+    <div class="music-section mt-5" id="musicSection" style="display:none;">
+      <div class="music-section-header">
+        <h2 class="music-title">
+          <i class="bi bi-music-note-beamed me-2"></i>
+          Recommended for your <span class="gradient-text" id="musicEmotionLabel">mood</span>
+        </h2>
+        <button class="btn btn-glass btn-sm" onclick="refreshTracks()">
+          <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+        </button>
+      </div>
+
+      <div class="track-grid" id="trackGrid">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Save Song Toast -->
+<div class="save-toast" id="saveToast" style="display:none;">
+  <i class="bi bi-heart-fill me-2 text-accent"></i> Song saved to favourites!
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/detect.js') }}"></script>
+{% endblock %}
