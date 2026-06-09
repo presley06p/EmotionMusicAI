@@ -24,14 +24,8 @@ except ImportError:
     logger.warning("OpenCV not installed; face detection degraded.")
 
 try:
-    from fer import FER
-    _fer_detector = FER(mtcnn=True)
-    FER_AVAILABLE = True
-    logger.info("[FER] FER detector loaded with MTCNN.")
-except Exception as e:
     FER_AVAILABLE = False
-    _fer_detector = None
-    logger.warning(f"[FER] FER not available: {e}")
+_fer_detector = None
 
 try:
     from deepface import DeepFace
