@@ -4,16 +4,16 @@ Database module — SQLite via sqlite3 with row_factory.
 
 import sqlite3
 import os
-from flask import g, current_app
+from flask import g
 
-DB_PATH = os.environ.get("DB_PATH", "database.db")
+DB_PATH = os.environ.get("DB_PATH", "/tmp/database.db")  # /tmp works on Render
 
 
 def get_db():
-    """Return a per-request DB connection stored in Flask's g object."""
     if "db" not in g:
         g.db = sqlite3.connect(DB_PATH, detect_types=sqlite3.PARSE_DECLTYPES)
         g.db.row_factory = sqlite3.Row
+        g.db.execute("PRAGMA journal_mode=WAL")
     return g.db
 
 
@@ -24,17 +24,16 @@ def close_db(e=None):
 
 
 def init_db():
-    """Create all tables if they don't exist."""
     db = sqlite3.connect(DB_PATH)
     db.row_factory = sqlite3.Row
     cursor = db.cursor()
 
     cursor.executescript("""
         CREATE TABLE IF NOT EXISTS users (
-            id        INTEGER PRIMARY KEY AUTOINCREMENT,
-            username  TEXT    NOT NULL UNIQUE,
-            email     TEXT    NOT NULL UNIQUE,
-            password  TEXT    NOT NULL,
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            username   TEXT    NOT NULL UNIQUE,
+            email      TEXT    NOT NULL UNIQUE,
+            password   TEXT    NOT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
 
@@ -72,4 +71,4 @@ def init_db():
 
     db.commit()
     db.close()
-    print("[DB] Tables initialised.")
+    print(f"[DB] Tables initialised at {DB_PATH}")

@@ -315,7 +315,20 @@ def _current_user():
 
 
 # ── Init & Run ────────────────────────────────────────────────────────────────
-if __name__ == "__main__":
+# ── Init DB on startup ────────────────────────────────────────────────────
+import os
+
+def create_app():
     with app.app_context():
         init_db()
+    app.teardown_appcontext(close_db)
+    return app
+
+# Always init DB when module loads (works on Render/Gunicorn too)
+with app.app_context():
+    init_db()
+
+app.teardown_appcontext(close_db)
+
+if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
