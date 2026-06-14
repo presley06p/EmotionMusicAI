@@ -13,7 +13,7 @@ from typing import Dict, List
 logger = logging.getLogger(__name__)
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
 EMOTIONS = ["happy", "sad", "angry", "fear", "love", "surprise", "neutral"]
 
@@ -118,22 +118,20 @@ def _keyword_scores(tokens: List[str]) -> Dict[str, float]:
     return scores
 
 
-def _analyze_with_gemini(text: str) -> dict | None:
-    """Use Google Gemini API for deep emotion analysis."""
-    if not GEMINI_API_KEY:
+def _analyze_with_groq(text: str) -> dict | None:
+    if not GROQ_API_KEY:
         return None
 
-    prompt = f"""You are an expert emotion analyst. Analyse the emotion in this text deeply.
+    prompt = f"""Analyse the emotion in this text deeply.
+Consider sarcasm, implied meaning, context, and nuance.
 
 Text: "{text}"
 
-Consider: literal meaning, implied emotion, sarcasm, irony, context clues, mixed emotions.
-
-Return ONLY this JSON with no other text or markdown:
+Return ONLY this JSON, no other text:
 {{
   "emotion": "one of: happy, sad, angry, fear, love, surprise, neutral",
   "confidence": 0.85,
-  "explanation": "2 sentences explaining the emotional analysis and any nuance detected",
+  "explanation": "2 sentences explaining the emotion and any nuance",
   "all_scores": {{
     "happy": 0.0,
     "sad": 0.0,
@@ -144,34 +142,28 @@ Return ONLY this JSON with no other text or markdown:
     "neutral": 0.0
   }}
 }}
-
-Rules:
-- all_scores must sum to 1.0
-- confidence must match the dominant emotion score
-- Never default to neutral unless text is truly emotionally flat"""
+all_scores must sum to 1.0"""
 
     try:
         resp = requests.post(
-            f"{GEMINI_URL}?key={GEMINI_API_KEY}",
-            headers={"Content-Type": "application/json"},
+            GROQ_URL,
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json",
+            },
             json={
-                "contents": [{
-                    "parts": [{"text": prompt}]
-                }],
-                "generationConfig": {
-                    "temperature": 0.1,
-                    "maxOutputTokens": 400,
-                }
+                "model": "llama3-8b-8192",
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.1,
+                "max_tokens": 400,
             },
             timeout=15,
         )
         resp.raise_for_status()
-
-        raw = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+        raw = resp.json()["choices"][0]["message"]["content"].strip()
         raw = re.sub(r"```(?:json)?", "", raw).strip()
 
         data = json.loads(raw)
-
         emotion = data.get("emotion", "neutral")
         if emotion not in EMOTIONS:
             emotion = "neutral"
@@ -189,34 +181,29 @@ Rules:
             "confidence":  round(float(data.get("confidence", 0.7)), 4),
             "all_scores":  all_scores,
             "explanation": data.get("explanation", ""),
-            "method":      "gemini-ai",
+            "method":      "groq-ai",
         }
 
     except json.JSONDecodeError as e:
-        logger.error(f"[Gemini] JSON parse error: {e}")
+        logger.error(f"[Groq] JSON parse error: {e}")
         return None
     except Exception as e:
-        logger.error(f"[Gemini] API error: {e}")
+        logger.error(f"[Groq] API error: {e}")
         return None
 
 
 def analyze_text_emotion(text: str) -> dict:
-    """Classify emotion. Uses Gemini AI if key set, else keyword fallback."""
-
-    result = _analyze_with_gemini(text)
+    result = _analyze_with_groq(text)
     if result:
         return result
 
     # Keyword fallback
     tokens = _tokenize(text)
     scores = _keyword_scores(tokens)
-
     total = sum(max(v, 0) for v in scores.values()) or 1
     norm  = {k: round(max(v, 0) / total, 4) for k, v in scores.items()}
-
     best_emotion = max(norm, key=norm.get)
     confidence   = norm[best_emotion]
-
     if confidence == 0:
         best_emotion = "neutral"
         confidence   = 0.5
@@ -228,10 +215,9 @@ def analyze_text_emotion(text: str) -> dict:
         "angry":    "Your message conveys frustration or anger. 🔥",
         "fear":     "Your message suggests anxiety or worry. 😰",
         "love":     "Your message is filled with warmth and affection. ❤️",
-        "surprise": "Your message reflects astonishment or unexpected news. 😮",
+        "surprise": "Your message reflects astonishment. 😮",
         "neutral":  "Your message has a calm, neutral tone. 😐",
     }
-
     return {
         "emotion":     best_emotion,
         "confidence":  confidence,

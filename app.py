@@ -166,7 +166,7 @@ def dashboard():
 @app.route("/detect")
 @login_required
 def detect():
-    ai_key = bool(os.environ.get("GEMINI_API_KEY"))
+    ai_key = bool(os.environ.get("GROQ_API_KEY"))
     spotify_ok = has_credentials()
     return render_template("emotion_detection.html", user=_current_user(), ai_enabled=ai_key, spotify_enabled=spotify_ok)
 

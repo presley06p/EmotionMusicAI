@@ -13,27 +13,26 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-GEMINI_VISION_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 EMOTIONS = ["happy", "sad", "angry", "fear", "love", "surprise", "neutral"]
 
 
-def _analyze_with_gemini_vision(b64_image: str) -> dict | None:
-    """Send webcam frame to Gemini Vision for emotion analysis."""
-    if not GEMINI_API_KEY:
+def _analyze_with_groq_vision(b64_image: str) -> dict | None:
+    """Groq vision via llama-4 scout model."""
+    if not GROQ_API_KEY:
         return None
 
-    prompt = """You are an expert facial emotion analyst. Analyse the face in this image carefully.
+    prompt = """Analyse the facial emotion in this image.
+Look at eyebrows, mouth, eyes, forehead tension carefully.
 
-Look at: eyebrows (raised/furrowed), mouth (smile/frown/open), eyes (wide/squinted/tearful), forehead tension, cheek position.
-
-Return ONLY this JSON with no other text or markdown:
+Return ONLY this JSON, no other text:
 {
   "emotion": "one of: happy, sad, angry, fear, love, surprise, neutral",
-  "confidence": 0.0,
+  "confidence": 0.85,
   "face_detected": true,
-  "explanation": "one sentence describing what facial features indicate this emotion",
+  "explanation": "one sentence describing what facial features show this emotion",
   "all_scores": {
     "happy": 0.0,
     "sad": 0.0,
@@ -44,38 +43,36 @@ Return ONLY this JSON with no other text or markdown:
     "neutral": 0.0
   }
 }
-
-Rules:
-- all_scores must sum to 1.0
-- If no face visible, set face_detected to false
-- Do NOT default to happy or neutral — be precise"""
+all_scores must sum to 1.0. Do NOT default to happy or neutral."""
 
     try:
         resp = requests.post(
-            f"{GEMINI_VISION_URL}?key={GEMINI_API_KEY}",
-            headers={"Content-Type": "application/json"},
+            GROQ_URL,
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json",
+            },
             json={
-                "contents": [{
-                    "parts": [
+                "model": "meta-llama/llama-4-scout-17b-16e-instruct",
+                "messages": [{
+                    "role": "user",
+                    "content": [
                         {
-                            "inline_data": {
-                                "mime_type": "image/jpeg",
-                                "data": b64_image,
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{b64_image}"
                             }
                         },
-                        {"text": prompt}
+                        {"type": "text", "text": prompt}
                     ]
                 }],
-                "generationConfig": {
-                    "temperature": 0.1,
-                    "maxOutputTokens": 400,
-                }
+                "temperature": 0.1,
+                "max_tokens": 400,
             },
             timeout=15,
         )
         resp.raise_for_status()
-
-        raw = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+        raw = resp.json()["choices"][0]["message"]["content"].strip()
         raw = re.sub(r"```(?:json)?", "", raw).strip()
 
         data = json.loads(raw)
@@ -102,14 +99,14 @@ Rules:
             "all_scores":  all_scores,
             "face_box":    [50, 50, 200, 200],
             "explanation": data.get("explanation", ""),
-            "method":      "gemini-vision",
+            "method":      "groq-vision",
         }
 
     except json.JSONDecodeError as e:
         logger.error(f"[FaceDetect] JSON parse error: {e}")
         return None
     except Exception as e:
-        logger.error(f"[FaceDetect] Gemini Vision error: {e}")
+        logger.error(f"[FaceDetect] Groq Vision error: {e}")
         return None
 
 
@@ -135,10 +132,8 @@ def _enhanced_fallback() -> dict:
 
 
 def analyze_face_emotion(b64_image: str) -> dict:
-    """Analyse webcam frame. Uses Gemini Vision if key set, else demo."""
-    result = _analyze_with_gemini_vision(b64_image)
+    result = _analyze_with_groq_vision(b64_image)
     if result:
         return result
-
-    logger.warning("[FaceDetect] No GEMINI_API_KEY — using demo mode.")
+    logger.warning("[FaceDetect] No GROQ_API_KEY — using demo mode.")
     return _enhanced_fallback()
