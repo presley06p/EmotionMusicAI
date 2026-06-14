@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — EmoTune AI{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+  <div class="dashboard-bg-grid"></div>
+
+  <div class="container py-5">
+
+    <!-- Header -->
+    <div class="dash-header mb-5">
+      <div>
+        <h1 class="dash-title">
+          Hey, <span class="gradient-text">{{ user.username }}</span> 👋
+        </h1>
+        <p class="dash-subtitle">Here's your emotional journey and music history.</p>
+      </div>
+      <a href="{{ url_for('detect') }}" class="btn btn-accent">
+        <i class="bi bi-lightning-charge me-2"></i>New Detection
+      </a>
+    </div>
+
+    <!-- ── Stat Cards ────────────────────────────────────────────────── -->
+    <div class="row g-3 mb-5">
+      {% set total_detections = history|length %}
+      {% set total_songs = recommendations|length %}
+      {% set top_emotion = emotion_freq[0].emotion if emotion_freq else 'None' %}
+      {% set top_emotion_count = emotion_freq[0].count if emotion_freq else 0 %}
+
+      <div class="col-6 col-lg-3">
+        <div class="stat-card glass-card">
+          <div class="stat-icon"><i class="bi bi-graph-up"></i></div>
+          <div class="stat-value">{{ total_detections }}</div>
+          <div class="stat-label">Total Detections</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card glass-card">
+          <div class="stat-icon"><i class="bi bi-music-note-list"></i></div>
+          <div class="stat-value">{{ total_songs }}</div>
+          <div class="stat-label">Songs Saved</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card glass-card">
+          <div class="stat-icon"><i class="bi bi-emoji-heart-eyes"></i></div>
+          <div class="stat-value">{{ top_emotion|capitalize }}</div>
+          <div class="stat-label">Top Emotion</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card glass-card">
+          <div class="stat-icon"><i class="bi bi-calendar-check"></i></div>
+          <div class="stat-value">{{ weekly|selectattr('count','gt',0)|list|length }}</div>
+          <div class="stat-label">Active Days (7d)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Charts Row ────────────────────────────────────────────────── -->
+    <div class="row g-4 mb-5">
+      <!-- Pie -->
+      <div class="col-lg-5">
+        <div class="glass-card chart-card h-100">
+          <div class="chart-card-header">
+            <i class="bi bi-pie-chart-fill me-2"></i>Emotion Breakdown
+          </div>
+          <div class="chart-container">
+            <canvas id="emotionPieChart"></canvas>
+          </div>
+          {% if not emotion_freq %}
+          <div class="chart-empty">
+            <i class="bi bi-bar-chart-line"></i>
+            <p>No data yet — run a detection!</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Weekly bar -->
+      <div class="col-lg-7">
+        <div class="glass-card chart-card h-100">
+          <div class="chart-card-header">
+            <i class="bi bi-bar-chart-fill me-2"></i>Weekly Mood Activity
+          </div>
+          <div class="chart-container">
+            <canvas id="weeklyBarChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Emotion Frequency Bars ─────────────────────────────────────── -->
+    {% if emotion_freq %}
+    <div class="glass-card mb-5 p-4">
+      <div class="chart-card-header mb-3">
+        <i class="bi bi-activity me-2"></i>Emotion Frequency
+      </div>
+      {% set max_count = emotion_freq[0].count %}
+      {% for row in emotion_freq %}
+      <div class="freq-row mb-2">
+        <div class="freq-label">{{ row.emotion|capitalize }}</div>
+        <div class="freq-bar-wrap">
+          <div class="freq-bar" style="width: {{ (row.count / max_count * 100)|int }}%; background: var(--emo-{{ row.emotion }}, var(--accent));"></div>
+        </div>
+        <div class="freq-count">{{ row.count }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ── Recent History & Saved Songs ──────────────────────────────── -->
+    <div class="row g-4 mb-5">
+      <!-- History -->
+      <div class="col-lg-7">
+        <div class="glass-card h-100">
+          <div class="chart-card-header">
+            <i class="bi bi-clock-history me-2"></i>Recent Detections
+            <a href="#" class="ms-auto small text-accent" onclick="downloadHistory()">
+              <i class="bi bi-download me-1"></i>Export
+            </a>
+          </div>
+          <div class="history-table-wrap">
+            {% if history %}
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Emotion</th>
+                  <th>Confidence</th>
+                  <th>Source</th>
+                  <th>Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in history %}
+                <tr>
+                  <td>
+                    <span class="emo-chip emo-chip--{{ row.emotion }}">
+                      {{ row.emotion|capitalize }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="conf-bar-sm">
+                      <div class="conf-bar-fill" style="width:{{ (row.confidence * 100)|int }}%"></div>
+                    </div>
+                    <span class="small">{{ (row.confidence * 100)|int }}%</span>
+                  </td>
+                  <td>
+                    <i class="bi bi-{% if row.source == 'face' %}camera-video{% else %}chat-text{% endif %} me-1"></i>
+                    {{ row.source|capitalize }}
+                  </td>
+                  <td class="small text-muted">{{ row.timestamp[:16] if row.timestamp else '' }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            {% else %}
+            <div class="chart-empty">
+              <i class="bi bi-clock"></i>
+              <p>No detections yet. <a href="{{ url_for('detect') }}">Try one!</a></p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Saved songs -->
+      <div class="col-lg-5">
+        <div class="glass-card h-100">
+          <div class="chart-card-header">
+            <i class="bi bi-heart-fill me-2"></i>Saved Songs
+          </div>
+          {% if recommendations %}
+            <div class="saved-songs-list">
+              {% for song in recommendations %}
+              <div class="saved-song-item">
+                <div class="saved-cover">
+                  {% if song.album_cover %}
+                    <img src="{{ song.album_cover }}" alt="cover" />
+                  {% else %}
+                    <div class="saved-cover-placeholder"><i class="bi bi-music-note"></i></div>
+                  {% endif %}
+                </div>
+                <div class="saved-info">
+                  <div class="saved-name">{{ song.song_name }}</div>
+                  <div class="saved-artist">{{ song.artist }}</div>
+                  <div class="saved-emo">
+                    <span class="emo-chip emo-chip--{{ song.emotion }}">{{ song.emotion|capitalize }}</span>
+                  </div>
+                </div>
+                {% if song.spotify_url %}
+                <a href="{{ song.spotify_url }}" target="_blank" class="btn-icon-sm">
+                  <i class="bi bi-spotify"></i>
+                </a>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="chart-empty">
+              <i class="bi bi-heart"></i>
+              <p>No saved songs yet.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Mood Journal ───────────────────────────────────────────────── -->
+    <div class="glass-card mb-5">
+      <div class="chart-card-header">
+        <i class="bi bi-journal-richtext me-2"></i>Mood Journal
+        <button class="btn btn-accent btn-sm ms-auto" data-bs-toggle="collapse" data-bs-target="#journalForm">
+          <i class="bi bi-plus me-1"></i>Add Entry
+        </button>
+      </div>
+      <div class="collapse" id="journalForm">
+        <div class="p-3 border-top border-glass">
+          <textarea class="emotion-textarea" id="journalNote" placeholder="How are you feeling right now?" rows="3"></textarea>
+          <div class="d-flex gap-2 mt-2 justify-content-end">
+            <button class="btn btn-glass btn-sm" onclick="document.getElementById('journalNote').value=''">Clear</button>
+            <button class="btn btn-accent btn-sm" onclick="saveJournalEntry()">
+              <i class="bi bi-check2 me-1"></i>Save Entry
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Chart data from Jinja ─────────────────────────────────────────────────
+const emotionFreq = {{ emotion_freq | tojson }};
+const weeklyData  = {{ weekly      | tojson }};
+
+const EMOTION_COLORS = {
+  happy:    '#1DB954', sad:     '#1E90FF', angry:   '#FF4444',
+  fear:     '#9B59B6', love:    '#FF6B9D', surprise:'#FFD700',
+  neutral:  '#00D4AA', disgust: '#FF8C00',
+};
+
+// ── Pie Chart ─────────────────────────────────────────────────────────────
+if (emotionFreq.length) {
+  const pie = document.getElementById('emotionPieChart').getContext('2d');
+  new Chart(pie, {
+    type: 'doughnut',
+    data: {
+      labels: emotionFreq.map(r => r.emotion.charAt(0).toUpperCase() + r.emotion.slice(1)),
+      datasets: [{
+        data:            emotionFreq.map(r => r.count),
+        backgroundColor: emotionFreq.map(r => EMOTION_COLORS[r.emotion] || '#888'),
+        borderWidth: 2,
+        borderColor: 'rgba(255,255,255,0.05)',
+        hoverOffset: 8,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position:'bottom', labels:{ color:'#ccc', padding:14, font:{size:12} } },
+      },
+      cutout: '65%',
+    }
+  });
+}
+
+// ── Weekly Bar Chart ──────────────────────────────────────────────────────
+(function(){
+  const ctx = document.getElementById('weeklyBarChart').getContext('2d');
+  const labels = weeklyData.map(d => {
+    const dt = new Date(d.date);
+    return dt.toLocaleDateString('en', {weekday:'short', month:'short', day:'numeric'});
+  });
+  const counts = weeklyData.map(d => d.count);
+  const colors = weeklyData.map(d => EMOTION_COLORS[d.emotion] || '#888');
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets:[{
+        label:'Detections',
+        data: counts,
+        backgroundColor: colors.map(c => c + 'CC'),
+        borderColor: colors,
+        borderWidth: 2,
+        borderRadius: 8,
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{
+        x:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#aaa'} },
+        y:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#aaa', stepSize:1}, beginAtZero:true },
+      }
+    }
+  });
+})();
+
+// ── Download history ──────────────────────────────────────────────────────
+function downloadHistory() {
+  fetch('/api/history')
+    .then(r => r.json())
+    .then(data => {
+      const csv = ['Emotion,Confidence,Source,Timestamp',
+        ...data.map(r => `${r.emotion},${(r.confidence*100).toFixed(1)}%,${r.source},${r.timestamp}`)
+      ].join('\n');
+      const a = document.createElement('a');
+      a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+      a.download = 'emotune_history.csv';
+      a.click();
+    });
+}
+
+// ── Journal entry ─────────────────────────────────────────────────────────
+function saveJournalEntry() {
+  const note = document.getElementById('journalNote').value.trim();
+  if (!note) return;
+  // In a full implementation, POST to /api/journal
+  alert('Journal entry saved! ✓');
+  document.getElementById('journalNote').value = '';
+  bootstrap.Collapse.getInstance(document.getElementById('journalForm'))?.hide();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,17 @@
+# ── Core Framework ────────────────────────────────────────────────────────
+Flask==3.0.3
+Werkzeug==3.0.3
+
+# ── HTTP / API requests ───────────────────────────────────────────────────
+requests==2.32.3
+
+# ── Utilities ─────────────────────────────────────────────────────────────
+python-dotenv==1.0.1
+gunicorn==22.0.0
+
+# ── Notes ─────────────────────────────────────────────────────────────────
+# AI emotion analysis (text + face) is powered by the Claude API.
+# Set ANTHROPIC_API_KEY in your environment — no TensorFlow/OpenCV needed.
+#
+# Spotify integration uses the standard `requests` library.
+# Set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET for live track search.
