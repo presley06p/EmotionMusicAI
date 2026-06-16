@@ -5,6 +5,8 @@ Falls back to enhanced keyword model if API key not set.
 
 import re
 import os
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 import json
 import logging
 import requests
@@ -12,8 +14,6 @@ from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
 EMOTIONS = ["happy", "sad", "angry", "fear", "love", "surprise", "neutral"]
 
@@ -119,6 +119,7 @@ def _keyword_scores(tokens: List[str]) -> Dict[str, float]:
 
 
 def _analyze_with_groq(text: str) -> dict | None:
+    print("Groq key loaded:", bool(GROQ_API_KEY))
     if not GROQ_API_KEY:
         return None
 
