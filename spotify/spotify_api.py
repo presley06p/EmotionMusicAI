@@ -204,12 +204,14 @@ def search_tracks_by_emotion(emotion: str, limit: int = 12) -> list:
             )
             resp.raise_for_status()
             items = resp.json().get("tracks", {}).get("items", [])
+            logger.warning(f"Spotify returned {len(items)} tracks")
             for t in items:
-                if t["id"] not in seen_ids and t.get("preview_url") is not None:
-                    seen_ids.add(t["id"])
-                    tracks.append(_format_track(t))
+              if t["id"] not in seen_ids:
+               seen_ids.add(t["id"])
+               tracks.append(_format_track(t))
         except Exception as e:
             logger.error(f"[Spotify] Search error '{query}': {e}")
+            logger.warning(f"Tracks kept after filtering: {len(tracks)}")
 
     # Sort by popularity, cap at limit
     tracks.sort(key=lambda t: t["popularity"], reverse=True)
