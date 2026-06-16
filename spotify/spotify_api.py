@@ -143,7 +143,7 @@ def _get_client_token() -> str | None:
         logger.info("[Spotify] Client credentials token refreshed.")
         return _token_cache["token"]
     except Exception as e:
-    logger.error(f"[Spotify] Client credentials error: {e}")
+       logger.error(f"[Spotify] Client credentials error: {e}")
 
     if 'resp' in locals():
         logger.error(resp.text)
