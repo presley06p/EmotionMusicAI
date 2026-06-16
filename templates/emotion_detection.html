@@ -20,17 +20,15 @@
     </div>
 
     <!-- Status Banners -->
-    <div class="status-banners mb-4">
-      {% if ai_enabled %}
-        <div class="status-banner status-banner--ok">
+    <div class="status-banner status-banner--ok">
           <i class="bi bi-cpu-fill me-2"></i>
-          <span><strong>Claude AI Active</strong> — Accurate emotion detection enabled</span>
+          <span><strong>Groq AI Active</strong> — Accurate emotion detection enabled</span>
           <span class="status-badge status-badge--ok">Live</span>
         </div>
       {% else %}
         <div class="status-banner status-banner--warn">
           <i class="bi bi-exclamation-triangle me-2"></i>
-          <span><strong>Demo Mode</strong> — Set <code>ANTHROPIC_API_KEY</code> for real AI detection</span>
+          <span><strong>Demo Mode</strong> — Set <code>GROQ_API_KEY</code> for real AI detection</span>
           <span class="status-badge status-badge--warn">Demo</span>
         </div>
       {% endif %}
