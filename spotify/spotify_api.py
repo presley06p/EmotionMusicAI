@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 
 CLIENT_ID     = os.environ.get("SPOTIFY_CLIENT_ID", "")
 CLIENT_SECRET = os.environ.get("SPOTIFY_CLIENT_SECRET", "")
+print("CLIENT_ID loaded:", bool(CLIENT_ID))
+print("CLIENT_SECRET loaded:", bool(CLIENT_SECRET))
 REDIRECT_URI  = os.environ.get("SPOTIFY_REDIRECT_URI",
                                 "http://localhost:5000/spotify/callback")
 
