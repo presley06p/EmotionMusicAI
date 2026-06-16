@@ -113,8 +113,7 @@ def get_spotify_token(code: str) -> dict | None:
 
 
 def _get_client_token() -> str | None:
-    logger.warning(f"CLIENT_ID: {CLIENT_ID[:5]}..." if CLIENT_ID else "No Client ID")
-    logger.warning(f"CLIENT_SECRET loaded: {bool(CLIENT_SECRET)}")
+  
     """
     Get / refresh an app-level (client credentials) access token.
     Cached in memory and auto-refreshed when expired.
@@ -140,10 +139,6 @@ def _get_client_token() -> str | None:
         )
         resp.raise_for_status()
         data = resp.json()
-        logger.warning(f"Spotify token received: {'access_token' in data}")
-        logger.warning(f"Spotify response: {data}")
-        logger.warning(f"Spotify token received: {'access_token' in data}")
-        logger.warning(f"Spotify response: {data}")
         _token_cache["token"]      = data["access_token"]
         _token_cache["expires_at"] = now + data.get("expires_in", 3600)
         logger.info("[Spotify] Client credentials token refreshed.")
@@ -264,10 +259,7 @@ def get_recommendations(emotion: str, seed_tracks: list = None, limit: int = 10)
 
 
 def has_credentials() -> bool:
-    logger.warning(f"CLIENT_ID loaded: {bool(CLIENT_ID)}")
-    logger.warning(f"CLIENT_SECRET loaded: {bool(CLIENT_SECRET)}")
-    logger.warning(f"CLIENT_ID first chars: {CLIENT_ID[:5] if CLIENT_ID else 'NONE'}")
-    return bool(CLIENT_ID and CLIENT_SECRET)
+ return bool(CLIENT_ID and CLIENT_SECRET)
 
 # ── Demo / mock tracks (shown when no credentials) ────────────────────────
 MOCK_LIBRARY = {
