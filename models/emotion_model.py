@@ -160,10 +160,12 @@ all_scores must sum to 1.0"""
             },
             timeout=15,
         )
-        resp.raise_for_status()
-        raw = resp.json()["choices"][0]["message"]["content"].strip()
-        raw = re.sub(r"```(?:json)?", "", raw).strip()
+        if resp.status_code != 200:
+          logger.error(f"Groq Status: {resp.status_code}")
+          logger.error(f"Groq Response: {resp.text}")
+          return None
 
+        resp.raise_for_status()
         data = json.loads(raw)
         emotion = data.get("emotion", "neutral")
         if emotion not in EMOTIONS:
