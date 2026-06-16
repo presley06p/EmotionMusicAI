@@ -142,6 +142,8 @@ def _get_client_token() -> str | None:
         data = resp.json()
         logger.warning(f"Spotify token received: {'access_token' in data}")
         logger.warning(f"Spotify response: {data}")
+        logger.warning(f"Spotify token received: {'access_token' in data}")
+        logger.warning(f"Spotify response: {data}")
         _token_cache["token"]      = data["access_token"]
         _token_cache["expires_at"] = now + data.get("expires_in", 3600)
         logger.info("[Spotify] Client credentials token refreshed.")
