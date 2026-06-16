@@ -111,10 +111,13 @@ def get_spotify_token(code: str) -> dict | None:
 
 
 def _get_client_token() -> str | None:
+    logger.warning(f"CLIENT_ID: {CLIENT_ID[:5]}..." if CLIENT_ID else "No Client ID")
+    logger.warning(f"CLIENT_SECRET loaded: {bool(CLIENT_SECRET)}")
     """
     Get / refresh an app-level (client credentials) access token.
     Cached in memory and auto-refreshed when expired.
     """
+    
     now = time.time()
     if _token_cache["token"] and _token_cache["expires_at"] > now + 60:
         return _token_cache["token"]
@@ -140,8 +143,12 @@ def _get_client_token() -> str | None:
         logger.info("[Spotify] Client credentials token refreshed.")
         return _token_cache["token"]
     except Exception as e:
-        logger.error(f"[Spotify] Client credentials error: {e}")
-        return None
+    logger.error(f"[Spotify] Client credentials error: {e}")
+
+    if 'resp' in locals():
+        logger.error(resp.text)
+
+    return None
 
 
 # ── Track formatting ──────────────────────────────────────────────────────
