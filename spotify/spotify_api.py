@@ -258,8 +258,9 @@ def get_recommendations(emotion: str, seed_tracks: list = None, limit: int = 10)
 
 
 def has_credentials() -> bool:
-    logger.info(f"CLIENT_ID loaded: {bool(CLIENT_ID)}")
-    logger.info(f"CLIENT_SECRET loaded: {bool(CLIENT_SECRET)}")
+    logger.warning(f"CLIENT_ID loaded: {bool(CLIENT_ID)}")
+    logger.warning(f"CLIENT_SECRET loaded: {bool(CLIENT_SECRET)}")
+    logger.warning(f"CLIENT_ID first chars: {CLIENT_ID[:5] if CLIENT_ID else 'NONE'}")
     return bool(CLIENT_ID and CLIENT_SECRET)
 
 # ── Demo / mock tracks (shown when no credentials) ────────────────────────
