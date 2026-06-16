@@ -249,9 +249,9 @@ def get_recommendations(emotion: str, seed_tracks: list = None, limit: int = 10)
 
 
 def has_credentials() -> bool:
-    """Return True if Spotify credentials are configured."""
+    logger.info(f"CLIENT_ID loaded: {bool(CLIENT_ID)}")
+    logger.info(f"CLIENT_SECRET loaded: {bool(CLIENT_SECRET)}")
     return bool(CLIENT_ID and CLIENT_SECRET)
-
 
 # ── Demo / mock tracks (shown when no credentials) ────────────────────────
 MOCK_LIBRARY = {
