@@ -153,7 +153,7 @@ all_scores must sum to 1.0"""
                 "Content-Type": "application/json",
             },
             json={
-                "model": "llama-3.1-8b-instant",
+                "model": "llama-3.3-70b-versatile",
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.1,
                 "max_tokens": 400,
@@ -164,7 +164,10 @@ all_scores must sum to 1.0"""
           logger.error(f"Groq Status: {resp.status_code}")
           logger.error(f"Groq Response: {resp.text}")
           return None
-
+        if resp.status_code != 200:
+          logger.error(f"Groq Status: {resp.status_code}")
+        logger.error(f"Groq Response: {resp.text}")
+        return None
         resp.raise_for_status()
         data = json.loads(raw)
         emotion = data.get("emotion", "neutral")
@@ -178,7 +181,7 @@ all_scores must sum to 1.0"""
 
         total = sum(all_scores.values()) or 1
         all_scores = {k: round(v / total, 4) for k, v in all_scores.items()}
-
+        print("Using AI model")
         return {
             "emotion":     emotion,
             "confidence":  round(float(data.get("confidence", 0.7)), 4),
@@ -196,6 +199,7 @@ all_scores must sum to 1.0"""
 
 
 def analyze_text_emotion(text: str) -> dict:
+    print("Using keyword fallback")
     result = _analyze_with_groq(text)
     if result:
         return result

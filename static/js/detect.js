@@ -294,7 +294,12 @@ function renderTextResult(data) {
 
   document.getElementById('textEmoji').textContent      = EMOTION_EMOJIS[emotion] || '😐';
   document.getElementById('textEmotionName').textContent = capitalize(emotion);
-  const textMethodLabels = {'claude-ai':'Claude AI', 'transformer':'Transformer NLP', 'keyword':'Keyword NLP'};
+  const textMethodLabels = {
+    'groq-ai':'Groq AI',
+    'claude-ai':'Claude AI',
+    'transformer':'Transformer NLP',
+    'keyword':'Keyword NLP'
+  };
   document.getElementById('textMethodBadge').textContent = textMethodLabels[method] || 'NLP';
   document.getElementById('textEmotionName').style.color = color;
 
