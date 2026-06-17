@@ -27,9 +27,7 @@ EMOTION_KEYWORDS: Dict[str, List[str]] = {
     "neutral": ["okay", "fine", "normal", "average", "meh"],
 }
 
-NEGATIONS = {
-    "not", "no", "never", "don't", "can't", "won't", "isn't", "wasn't"
-}
+NEGATIONS = {"not", "no", "never", "don't", "can't", "won't", "isn't", "wasn't"}
 
 INTENSIFIERS = {
     "very": 1.5,
@@ -125,10 +123,13 @@ Text: "{text}"
 
         raw = resp.json()["choices"][0]["message"]["content"].strip()
 
-        # clean markdown
         raw = re.sub(r"```json|```", "", raw).strip()
 
-        data = json.loads(raw)
+        try:
+            data = json.loads(raw)
+        except Exception:
+            logger.error(f"JSON parsing failed: {raw}")
+            return None
 
         emotion = data.get("emotion", "neutral")
         if emotion not in EMOTIONS:
