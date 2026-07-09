@@ -438,3 +438,22 @@
 
 .status-badge--ok   { background: rgba(29,185,84,.2);  color: #1DB954; border: 1px solid rgba(29,185,84,.4); }
 .status-badge--warn { background: rgba(255,193,7,.2);  color: #FFC107; border: 1px solid rgba(255,193,7,.4); }
+/* ==========================================
+   Voice Recognition
+========================================== */
+
+.voice-controls{
+    display:flex;
+    align-items:center;
+    gap:15px;
+    margin-top:15px;
+}
+
+#voiceStatus{
+    color:#bdbdbd;
+    font-size:14px;
+}
+
+#btnVoice{
+    min-width:170px;
+}

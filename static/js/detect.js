@@ -520,6 +520,117 @@ function showTemporaryMsg(msg) {
     setTimeout(() => toast.remove(), 300);
   }, 3000);
 }
+// =============================
+// Voice Recognition
+// =============================
+
+let recognition;
+let listening = false;
+
+function initVoiceRecognition() {
+
+    const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+
+        alert("Speech Recognition is not supported in this browser.");
+
+        return;
+    }
+
+    recognition = new SpeechRecognition();
+
+    recognition.lang = "en-US";
+
+    recognition.continuous = false;
+
+    recognition.interimResults = false;
+
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+
+        listening = true;
+
+        document.getElementById("voiceStatus").innerText =
+            "🎤 Listening...";
+
+        document.getElementById("btnVoice").innerText =
+            "Stop";
+    };
+
+    recognition.onresult = (event) => {
+
+        const transcript =
+            event.results[0][0].transcript;
+
+        document.getElementById("textInput").value =
+            transcript;
+
+        updateCharCount();
+
+        analyzeText();
+    };
+
+    recognition.onerror = (event) => {
+
+        console.log(event.error);
+
+        document.getElementById("voiceStatus").innerText =
+            "Voice Error";
+    };
+
+    recognition.onend = () => {
+
+        listening = false;
+
+        document.getElementById("voiceStatus").innerText =
+            "Click microphone";
+
+        document.getElementById("btnVoice").innerText =
+            "🎤 Start Voice";
+    };
+}
+document.addEventListener('DOMContentLoaded', () => {
+
+    const ta = document.getElementById('textInput');
+
+    if (ta) {
+
+        ta.addEventListener('input', updateCharCount);
+
+        ta.addEventListener('keydown', e => {
+
+            if (e.key === 'Enter' && e.ctrlKey)
+                analyzeText();
+
+        });
+
+    }
+
+    initVoiceRecognition();
+
+    const btn = document.getElementById("btnVoice");
+
+    if (btn) {
+
+        btn.addEventListener("click", function () {
+
+            if (!recognition)
+                return;
+
+            if (!listening)
+                recognition.start();
+            else
+                recognition.stop();
+
+        });
+
+    }
+
+});
 
 // ── Utilities ─────────────────────────────────────────────────────────────
 function capitalize(str) {
