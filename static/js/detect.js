@@ -622,7 +622,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
 
             if (!listening)
-                recognition.start();
+                try {
+    recognition.start();
+} catch (err) {
+    console.error(err);
+}
             else
                 recognition.stop();
 
