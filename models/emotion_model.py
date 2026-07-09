@@ -15,8 +15,36 @@ logger = logging.getLogger(__name__)
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
-EMOTIONS = ["happy", "sad", "angry", "fear", "love", "surprise", "neutral"]
-
+EMOTIONS = [
+    "admiration",
+    "amusement",
+    "anger",
+    "annoyance",
+    "approval",
+    "caring",
+    "confusion",
+    "curiosity",
+    "desire",
+    "disappointment",
+    "disapproval",
+    "disgust",
+    "embarrassment",
+    "excitement",
+    "fear",
+    "gratitude",
+    "grief",
+    "joy",
+    "love",
+    "nervousness",
+    "optimism",
+    "pride",
+    "realization",
+    "relief",
+    "remorse",
+    "sadness",
+    "surprise",
+    "neutral"
+]
 EMOTION_KEYWORDS: Dict[str, List[str]] = {
     "happy": ["happy", "joy", "excited", "amazing", "awesome", "great", "smile", "laugh"],
     "sad": ["sad", "cry", "lonely", "depressed", "hurt", "pain", "tears"],
@@ -80,25 +108,92 @@ def _analyze_with_groq(text: str) -> dict | None:
         return None
 
     prompt = f"""
-Analyze the emotion in the text.
+You are an advanced emotion analysis AI.
 
-Return ONLY valid JSON:
-{{
-  "emotion": "happy",
-  "confidence": 0.9,
-  "explanation": "short reason",
-  "all_scores": {{
-    "happy": 0.9,
-    "sad": 0.0,
-    "angry": 0.0,
-    "fear": 0.0,
-    "love": 0.1,
-    "surprise": 0.0,
-    "neutral": 0.0
-  }}
-}}
+Analyze the emotional meaning of the text.
 
-Text: "{text}"
+Consider:
+- Context
+- Sarcasm
+- Implied meaning
+- Tone
+- Human psychology
+- Multiple emotions
+
+The possible emotions are:
+
+admiration,
+amusement,
+anger,
+annoyance,
+approval,
+caring,
+confusion,
+curiosity,
+desire,
+disappointment,
+disapproval,
+disgust,
+embarrassment,
+excitement,
+fear,
+gratitude,
+grief,
+joy,
+love,
+nervousness,
+optimism,
+pride,
+realization,
+relief,
+remorse,
+sadness,
+surprise,
+neutral
+
+Return ONLY valid JSON.
+
+{
+  "emotion":"joy",
+  "confidence":0.95,
+  "explanation":"Explain why this emotion was selected in 2-3 sentences.",
+  "all_scores":{
+      "admiration":0,
+      "amusement":0,
+      "anger":0,
+      "annoyance":0,
+      "approval":0,
+      "caring":0,
+      "confusion":0,
+      "curiosity":0,
+      "desire":0,
+      "disappointment":0,
+      "disapproval":0,
+      "disgust":0,
+      "embarrassment":0,
+      "excitement":0,
+      "fear":0,
+      "gratitude":0,
+      "grief":0,
+      "joy":0,
+      "love":0,
+      "nervousness":0,
+      "optimism":0,
+      "pride":0,
+      "realization":0,
+      "relief":0,
+      "remorse":0,
+      "sadness":0,
+      "surprise":0,
+      "neutral":0
+  }
+}
+
+The values inside all_scores MUST sum to exactly 1.0.
+
+Text:
+
+"{text}"
 """
 
     try:
@@ -131,24 +226,44 @@ Text: "{text}"
             logger.error(f"JSON parsing failed: {raw}")
             return None
 
-        emotion = data.get("emotion", "neutral")
+            emotion = data.get("emotion", "neutral")
         if emotion not in EMOTIONS:
             emotion = "neutral"
 
         scores = data.get("all_scores", {})
 
-        for e in EMOTIONS:
-            scores.setdefault(e, 0.0)
+        clean_scores = {}
 
-        total = sum(scores.values()) or 1
+        for emo in EMOTIONS:
+            try:
+                clean_scores[emo] = float(scores.get(emo, 0))
+            except:
+                clean_scores[emo] = 0.0
 
-        scores = {k: round(v / total, 4) for k, v in scores.items()}
+        total = sum(clean_scores.values())
+
+        if total <= 0:
+            clean_scores["neutral"] = 1.0
+            total = 1.0
+
+        scores = {
+            emo: round(value / total, 4)
+            for emo, value in clean_scores.items()
+        }
+
+        confidence = max(
+            round(float(data.get("confidence", 0.7)), 4),
+            max(scores.values())
+        )
 
         return {
             "emotion": emotion,
-            "confidence": round(float(data.get("confidence", 0.7)), 4),
+            "confidence": confidence,
             "all_scores": scores,
-            "explanation": data.get("explanation", ""),
+            "explanation": data.get(
+                "explanation",
+                f"The detected emotion is {emotion}."
+            ),
             "method": "groq-ai",
         }
 
