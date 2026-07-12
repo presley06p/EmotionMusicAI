@@ -203,7 +203,7 @@
 .emotion-bars { display: flex; flex-direction: column; gap: .5rem; }
 .emo-bar-row  { display: flex; align-items: center; gap: .6rem; }
 .emo-bar-name {
-  width: 70px;
+    width: 130px;
   font-size: .78rem;
   color: var(--text-muted);
   font-weight: 500;

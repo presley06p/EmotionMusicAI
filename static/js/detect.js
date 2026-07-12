@@ -5,76 +5,65 @@
 
 // ── Emotion config ────────────────────────────────────────────────────────
 const EMOTION_COLORS = {
-  happy:    '#1DB954',
-  sad:      '#1E90FF',
-  angry:    '#FF4444',
-  fear:     '#9B59B6',
-  love:     '#FF6B9D',
-  surprise: '#FFD700',
-  neutral:  '#00D4AA',
-  disgust:  '#FF8C00',
-  no_face:  '#888888',
-  admiration: "#4CAF50",
-amusement: "#FFC107",
-anger: "#F44336",
-annoyance: "#FF7043",
-approval: "#66BB6A",
-caring: "#EC407A",
-confusion: "#7E57C2",
-curiosity: "#29B6F6",
-desire: "#FF4081",
-disappointment: "#5C6BC0",
-disapproval: "#8D6E63",
-disgust: "#8BC34A",
-embarrassment: "#BA68C8",
-excitement: "#FF9800",
-fear: "#9C27B0",
-gratitude: "#26A69A",
-grief: "#455A64",
-joy: "#FFD54F",
-love: "#E91E63",
-nervousness: "#7986CB",
-optimism: "#42A5F5",
-pride: "#FFA726",
-realization: "#26C6DA",
-relief: "#66BB6A",
-remorse: "#A1887F",
-sadness: "#2196F3",
-surprise: "#FFEB3B",
-neutral: "#90A4AE"
+    admiration: "#4CAF50",
+    amusement: "#FFC107",
+    anger: "#F44336",
+    annoyance: "#FF7043",
+    approval: "#66BB6A",
+    caring: "#E91E63",
+    confusion: "#9E9E9E",
+    curiosity: "#3F51B5",
+    desire: "#FF9800",
+    disappointment: "#607D8B",
+    disapproval: "#795548",
+    disgust: "#8BC34A",
+    embarrassment: "#BA68C8",
+    excitement: "#FF5722",
+    fear: "#673AB7",
+    gratitude: "#00BCD4",
+    grief: "#3F51B5",
+    joy: "#FFD600",
+    love: "#E91E63",
+    nervousness: "#9575CD",
+    optimism: "#4CAF50",
+    pride: "#FFB300",
+    realization: "#00ACC1",
+    relief: "#26A69A",
+    remorse: "#8D6E63",
+    sadness: "#2196F3",
+    surprise: "#FFEB3B",
+    neutral: "#90A4AE"
 };
 
 const EMOTION_EMOJIS = {
-  happy:'😊', sad:'😢', angry:'😠', fear:'😨',
-  love:'❤️', surprise:'😮', neutral:'😐',
-  disgust:'🤢', no_face:'🚫',admiration:"👏",
-amusement:"😂",
-anger:"😠",
-annoyance:"😒",
-approval:"👍",
-caring:"🤗",
-confusion:"😕",
-curiosity:"🤔",
-desire:"😍",
-disappointment:"😞",
-disapproval:"👎",
-disgust:"🤢",
-embarrassment:"😳",
-excitement:"🤩",
-fear:"😨",
-gratitude:"🙏",
-grief:"😭",
-joy:"😁",
-love:"❤️",
-nervousness:"😬",
-optimism:"🌞",
-pride:"😎",
-realization:"💡",
-relief:"😌",
-remorse:"😔",
-sadness:"😢",
-surprise:"😲",
-neutral:"😐"
+    admiration:"👏",
+    amusement:"😂",
+    anger:"😠",
+    annoyance:"😒",
+    approval:"👍",
+    caring:"🤗",
+    confusion:"😕",
+    curiosity:"🧐",
+    desire:"😍",
+    disappointment:"😞",
+    disapproval:"👎",
+    disgust:"🤢",
+    embarrassment:"😳",
+    excitement:"🤩",
+    fear:"😨",
+    gratitude:"🙏",
+    grief:"😭",
+    joy:"😁",
+    love:"❤️",
+    nervousness:"😬",
+    optimism:"🌞",
+    pride:"😌",
+    realization:"💡",
+    relief:"😮‍💨",
+    remorse:"😔",
+    sadness:"😢",
+    surprise:"😲",
+    neutral:"😐"
 };
 
 // ── State ─────────────────────────────────────────────────────────────────
@@ -350,11 +339,9 @@ function renderTextResult(data) {
   document.getElementById('textEmoji').textContent      = EMOTION_EMOJIS[emotion] || '😐';
   document.getElementById('textEmotionName').textContent = capitalize(emotion);
   const textMethodLabels = {
-    'groq-ai':'Groq AI',
-    'claude-ai':'Claude AI',
-    'transformer':'Transformer NLP',
-    'keyword':'Keyword NLP'
-  };
+    "groq-ai":"Groq Llama 3 AI (28 Emotions)",
+    "keyword":"Keyword Fallback"
+};
   document.getElementById('textMethodBadge').textContent = textMethodLabels[method] || 'NLP';
   document.getElementById('textEmotionName').style.color = color;
 
@@ -378,7 +365,9 @@ function renderEmoBars(containerId, scores) {
   const container = document.getElementById(containerId);
   if (!container || !scores) return;
 
-  const entries = Object.entries(scores).sort((a,b) => b[1] - a[1]);
+ const entries = Object.entries(scores)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
 
   container.innerHTML = entries.map(([emo, val]) => {
     const pct   = Math.round(val * 100);
@@ -692,11 +681,17 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ── Utilities ─────────────────────────────────────────────────────────────
-function capitalize(str) {
-  if (!str) return '';
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
+ffunction capitalize(str) {
+    if (!str) return "";
 
+    return str
+        .split("_")
+        .map(word =>
+            word.charAt(0).toUpperCase() +
+            word.slice(1)
+        )
+        .join(" ");
+}
 function escHtml(str) {
   return String(str || '')
     .replace(/&/g,'&amp;')
