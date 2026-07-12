@@ -107,57 +107,16 @@ def _analyze_with_groq(text: str) -> dict | None:
     if not GROQ_API_KEY:
         return None
 
-    prompt = f"""
-You are an advanced emotion analysis AI.
+    pprompt = f"""
+Analyze the emotion.
 
-Analyze the emotional meaning of the text.
+Return ONLY valid JSON:
 
-Consider:
-- Context
-- Sarcasm
-- Implied meaning
-- Tone
-- Human psychology
-- Multiple emotions
-
-The possible emotions are:
-
-admiration,
-amusement,
-anger,
-annoyance,
-approval,
-caring,
-confusion,
-curiosity,
-desire,
-disappointment,
-disapproval,
-disgust,
-embarrassment,
-excitement,
-fear,
-gratitude,
-grief,
-joy,
-love,
-nervousness,
-optimism,
-pride,
-realization,
-relief,
-remorse,
-sadness,
-surprise,
-neutral
-
-Return ONLY valid JSON.
-
-{
+{{
   "emotion":"joy",
   "confidence":0.95,
-  "explanation":"Explain why this emotion was selected in 2-3 sentences.",
-  "all_scores":{
+  "explanation":"...",
+  "all_scores": {{
       "admiration":0,
       "amusement":0,
       "anger":0,
@@ -186,13 +145,10 @@ Return ONLY valid JSON.
       "sadness":0,
       "surprise":0,
       "neutral":0
-  }
-}
-
-The values inside all_scores MUST sum to exactly 1.0.
+  }}
+}}
 
 Text:
-
 "{text}"
 """
 
