@@ -328,9 +328,10 @@ function renderTextResult(data) {
   document.getElementById('textPlaceholder').style.display = 'none';
 
   document.getElementById('textEmoji').textContent      = EMOTION_EMOJIS[emotion] || '😐';
-  document.getElementById('textEmotionName').textContent = capitalize(emotion);
-  const textMethodLabels = {
-    "groq-ai":"Groq Llama 3 AI (28 Emotions)",
+  document.getElementById("textEmotionName").textContent =
+    `${EMOTION_EMOJIS[emotion] || "🙂"} ${capitalize(emotion)}`;
+const textMethodLabels = {
+    "groq-ai":"🧠 Groq Llama 3 AI • 28 Emotion Model",
     "keyword":"Keyword Fallback"
 };
   document.getElementById('textMethodBadge').textContent = textMethodLabels[method] || 'NLP';
@@ -356,10 +357,10 @@ function renderEmoBars(containerId, scores) {
   const container = document.getElementById(containerId);
   if (!container || !scores) return;
 
- const entries = Object.entries(scores)
+const entries = Object.entries(scores)
+    .filter(([_, value]) => value > 0)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
-
+    .slice(0, 10);
   container.innerHTML = entries.map(([emo, val]) => {
     const pct   = Math.round(val * 100);
     const color = EMOTION_COLORS[emo] || '#888';
@@ -676,18 +677,11 @@ function capitalize(str) {
     if (!str) return "";
 
     return str
-        .split("_")
+        .replace(/_/g, " ")
+        .split(" ")
         .map(word =>
             word.charAt(0).toUpperCase() +
             word.slice(1)
         )
         .join(" ");
-}
-function escHtml(str) {
-  return String(str || '')
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;')
-    .replace(/'/g,'&#39;');
 }

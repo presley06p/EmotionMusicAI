@@ -107,7 +107,7 @@ def _analyze_with_groq(text: str) -> dict | None:
     if not GROQ_API_KEY:
         return None
 
-    pprompt = f"""
+    prompt = f"""
 Analyze the emotion.
 
 Return ONLY valid JSON:
