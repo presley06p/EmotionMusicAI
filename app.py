@@ -214,15 +214,32 @@ def api_analyze_face():
     result = analyze_face_emotion(img_data)
 
     if result.get("emotion") and result["emotion"] != "no_face":
-        db = get_db()
-        db.execute(
-            "INSERT INTO emotion_history (user_id, emotion, confidence, source, timestamp) VALUES (?,?,?,?,?)",
-            (session["user_id"], result["emotion"], result["confidence"], "face", datetime.utcnow())
+            # Persist
+     db = get_db()
+    db.execute(
+        "INSERT INTO emotion_history (user_id, emotion, confidence, source, timestamp) VALUES (?,?,?,?,?)",
+        (
+            session["user_id"],
+            result["emotion"],
+            result["confidence"],
+            "text",
+            datetime.utcnow()
         )
-        db.commit()
+    )
+    db.commit()
 
-        tracks = search_tracks_by_emotion(result["emotion"])
-        result["tracks"] = tracks
+    print("History saved successfully")
+
+    row = db.execute(
+        "SELECT COUNT(*) FROM emotion_history WHERE user_id=?",
+        (session["user_id"],)
+    ).fetchone()
+
+    print("Total history:", row[0])
+
+    # Fetch songs
+    tracks = search_tracks_by_emotion(result["emotion"])
+    result["tracks"] = tracks
 
     return jsonify(result)
 
