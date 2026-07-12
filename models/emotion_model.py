@@ -151,7 +151,6 @@ Return ONLY valid JSON:
 Text:
 "{text}"
 """
-
     try:
         resp = requests.post(
             GROQ_URL,
@@ -161,7 +160,9 @@ Text:
             },
             json={
                 "model": "llama-3.3-70b-versatile",
-                "messages": [{"role": "user", "content": prompt}],
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ],
                 "temperature": 0.1,
                 "max_tokens": 400,
             },
@@ -173,16 +174,16 @@ Text:
             return None
 
         raw = resp.json()["choices"][0]["message"]["content"].strip()
-
         raw = re.sub(r"```json|```", "", raw).strip()
 
         try:
             data = json.loads(raw)
-        except Exception:
+        except json.JSONDecodeError:
             logger.error(f"JSON parsing failed: {raw}")
             return None
 
-            emotion = data.get("emotion", "neutral")
+        emotion = data.get("emotion", "neutral")
+
         if emotion not in EMOTIONS:
             emotion = "neutral"
 
@@ -193,7 +194,7 @@ Text:
         for emo in EMOTIONS:
             try:
                 clean_scores[emo] = float(scores.get(emo, 0))
-            except:
+            except (ValueError, TypeError):
                 clean_scores[emo] = 0.0
 
         total = sum(clean_scores.values())
@@ -222,6 +223,11 @@ Text:
             ),
             "method": "groq-ai",
         }
+
+    except Exception as e:
+        logger.error(f"Groq exception: {e}")
+        return None
+
 
     except Exception as e:
         logger.error(f"Groq exception: {e}")
