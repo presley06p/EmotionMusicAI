@@ -277,15 +277,6 @@ function updateCharCount() {
   document.getElementById('charCount').textContent = `${val.length} / 500`;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const ta = document.getElementById('textInput');
-  if (ta) {
-    ta.addEventListener('input', updateCharCount);
-    ta.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && e.ctrlKey) analyzeText();
-    });
-  }
-});
 
 async function analyzeText() {
   const text = (document.getElementById('textInput').value || '').trim();
@@ -681,7 +672,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ── Utilities ─────────────────────────────────────────────────────────────
-ffunction capitalize(str) {
+function capitalize(str) {
     if (!str) return "";
 
     return str
