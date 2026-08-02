@@ -229,11 +229,6 @@ Text:
         return None
 
 
-    except Exception as e:
-        logger.error(f"Groq exception: {e}")
-        return None
-
-
 def analyze_text_emotion(text: str) -> dict:
     print("Using Groq model...")
 
