@@ -48,15 +48,23 @@
       {% endif %}
     </div>
 
-    <!-- Mode tabs -->
-    <div class="detect-tabs mb-5">
-      <button class="dtab dtab--active" id="tabFace" onclick="switchTab('face')">
+<!-- Mode tabs -->
+<div class="detect-tabs mb-5">
+    <button class="dtab dtab--active" id="tabFace"
+        onclick="switchTab('face')">
         <i class="bi bi-camera-video me-2"></i>Facial Detection
-      </button>
-      <button class="dtab" id="tabText" onclick="switchTab('text')">
+    </button>
+
+    <button class="dtab" id="tabText"
+        onclick="switchTab('text')">
         <i class="bi bi-chat-text me-2"></i>Text Analysis
-      </button>
-    </div>
+    </button>
+
+    <button class="dtab" id="tabVoice"
+        onclick="switchTab('voice')">
+        <i class="bi bi-mic me-2"></i>Voice Emotion
+    </button>
+</div>
 
     <!-- ── FACE TAB ─────────────────────────────────────────────────────── -->
     <div id="panelFace" class="detect-panel">
@@ -222,6 +230,82 @@
         </div>
       </div>
     </div>
+    <!-- VOICE EMOTION TAB -->
+<div id="panelVoice" class="detect-panel" style="display:none;">
+
+    <div class="row g-4 align-items-start">
+
+        <div class="col-lg-6">
+            <div class="glass-card text-input-card">
+
+                <div class="text-input-header">
+                    <i class="bi bi-mic-fill me-2"></i>
+                    Voice Emotion Recognition
+                </div>
+
+                <p class="text-secondary">
+                    Record your voice. Our AI will analyse vocal
+                    characteristics to identify your emotion.
+                </p>
+
+                <div class="text-center py-4">
+
+                    <button id="btnRecordVoice"
+                        class="btn btn-danger btn-lg">
+                        <i class="bi bi-mic-fill me-2"></i>
+                        Start Recording
+                    </button>
+
+                    <p id="recordingStatus" class="mt-3">
+                        Ready to record
+                    </p>
+
+                    <div id="audioLevel"
+                        class="mt-3 text-success">
+                        Audio analysis will appear here
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+
+            <div class="glass-card result-placeholder"
+                id="voicePlaceholder">
+
+                <i class="bi bi-soundwave"></i>
+                <p>Voice emotion results will appear here</p>
+
+            </div>
+
+            <div class="glass-card result-card"
+                id="voiceResult" style="display:none;">
+
+                <div class="result-header">
+                    <span class="result-label">
+                        Detected Voice Emotion
+                    </span>
+                    <span class="result-method-badge">
+                        Wav2Vec2
+                    </span>
+                </div>
+
+                <div class="result-emotion-display">
+                    <div class="result-emoji" id="voiceEmoji">😐</div>
+                    <div class="result-emotion-name"
+                        id="voiceEmotionName">Neutral</div>
+                    <div class="conf-pct"
+                        id="voiceConfidence">0%</div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
 
     <!-- ── Loading Spinner ─────────────────────────────────────────────── -->
     <div class="detect-loading" id="detectLoading" style="display:none;">

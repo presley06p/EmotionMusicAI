@@ -74,11 +74,25 @@ let lastTracks     = [];
 
 // ── Tab switching ─────────────────────────────────────────────────────────
 function switchTab(tab) {
-  document.getElementById('panelFace').style.display = tab === 'face' ? '' : 'none';
-  document.getElementById('panelText').style.display = tab === 'text' ? '' : 'none';
+    const tabs = ['face', 'text', 'voice'];
 
-  document.getElementById('tabFace').classList.toggle('dtab--active', tab === 'face');
-  document.getElementById('tabText').classList.toggle('dtab--active', tab === 'text');
+    tabs.forEach(name => {
+        const panel = document.getElementById(
+            'panel' + name.charAt(0).toUpperCase() + name.slice(1)
+        );
+
+        const button = document.getElementById(
+            'tab' + name.charAt(0).toUpperCase() + name.slice(1)
+        );
+
+        if (panel) {
+            panel.style.display = (tab === name) ? '' : 'none';
+        }
+
+        if (button) {
+            button.classList.toggle('dtab--active', tab === name);
+        }
+    });
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -563,8 +577,127 @@ function showTemporaryMsg(msg) {
 let recognition;
 let listening = false;
 
-function initVoiceRecognition() {
+let mediaRecorder;
+let recordedAudioChunks = [];
 
+async function startVoiceRecording() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true
+        });
+
+        recordedAudioChunks = [];
+
+        mediaRecorder = new MediaRecorder(stream);
+
+        mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+                recordedAudioChunks.push(event.data);
+            }
+        };
+
+        mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(recordedAudioChunks, {
+                type: mediaRecorder.mimeType
+            });
+
+            stream.getTracks().forEach(track => track.stop());
+
+            await analyzeVoiceAudio(audioBlob);
+        };
+
+        mediaRecorder.start();
+
+        document.getElementById("recordingStatus").textContent =
+            "Recording... Speak now.";
+
+        document.getElementById("btnRecordVoice").innerHTML =
+            '<i class="bi bi-stop-fill me-2"></i>Stop Recording';
+
+    } catch (error) {
+        alert("Microphone access failed. Please allow microphone permission.");
+        console.error(error);
+    }
+}
+
+
+async function analyzeVoiceAudio(audioBlob) {
+    document.getElementById("recordingStatus").textContent =
+        "Analysing your voice...";
+
+    const formData = new FormData();
+    formData.append("audio", audioBlob, "recording.webm");
+
+    try {
+        const response = await fetch("/analyze-voice", {
+            method: "POST",
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || "Voice analysis failed.");
+        }
+
+        document.getElementById("voicePlaceholder").style.display = "none";
+        document.getElementById("voiceResult").style.display = "";
+
+        document.getElementById("voiceEmotionName").textContent = result.emotion;
+
+        const emotionEmojis = {
+            angry: "😠",
+            disgust: "🤢",
+            fear: "😨",
+            happy: "😊",
+            neutral: "😐",
+            sad: "😢",
+            surprise: "😲"
+        };
+
+        document.getElementById("voiceEmoji").textContent =
+            emotionEmojis[result.emotion.toLowerCase()] || "🎭";
+
+        document.getElementById("voiceConfidence").textContent =
+    result.confidence + "%";
+
+// Connect voice emotion with Spotify recommendations
+lastEmotion = result.emotion;
+lastTracks = result.tracks || [];
+
+if (lastTracks.length > 0) {
+    renderMusicSection(lastEmotion, lastTracks);
+}
+
+document.getElementById("recordingStatus").textContent =
+    "Analysis complete!";
+
+    } catch (error) {
+        console.error(error);
+        document.getElementById("recordingStatus").textContent = error.message;
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const recordButton = document.getElementById("btnRecordVoice");
+
+    if (!recordButton) return;
+
+    recordButton.addEventListener("click", () => {
+      console.log("Recording button clicked!");
+
+        if (!mediaRecorder || mediaRecorder.state === "inactive") {
+            startVoiceRecording();
+        } else if (mediaRecorder.state === "recording") {
+            mediaRecorder.stop();
+            recordButton.innerHTML =
+                '<i class="bi bi-mic-fill me-2"></i>Start Recording';
+        }
+    });
+});
+
+function initVoiceRecognition() {
+  
     const SpeechRecognition =
         window.SpeechRecognition ||
         window.webkitSpeechRecognition;
@@ -628,48 +761,27 @@ function initVoiceRecognition() {
         document.getElementById("btnVoice").innerText =
             "🎤 Start Voice";
     };
-}
-document.addEventListener('DOMContentLoaded', () => {
-
-    const ta = document.getElementById('textInput');
-
-    if (ta) {
-
-        ta.addEventListener('input', updateCharCount);
-
-        ta.addEventListener('keydown', e => {
-
-            if (e.key === 'Enter' && e.ctrlKey)
-                analyzeText();
-
-        });
-
-    }
-
+  }
+document.addEventListener("DOMContentLoaded", () => {
     initVoiceRecognition();
 
     const btn = document.getElementById("btnVoice");
 
     if (btn) {
-
         btn.addEventListener("click", function () {
+            if (!recognition) return;
 
-            if (!recognition)
-                return;
-
-            if (!listening)
+            if (!listening) {
                 try {
-    recognition.start();
-} catch (err) {
-    console.error(err);
-}
-            else
+                    recognition.start();
+                } catch (err) {
+                    console.error(err);
+                }
+            } else {
                 recognition.stop();
-
+            }
         });
-
     }
-
 });
 
 // ── Utilities ─────────────────────────────────────────────────────────────

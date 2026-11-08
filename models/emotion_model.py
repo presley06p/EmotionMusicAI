@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+print("GROQ KEY LOADED IN EMOTION MODEL:", bool(GROQ_API_KEY))
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 EMOTIONS = [
@@ -108,7 +109,9 @@ def _keyword_scores(tokens: List[str]) -> Dict[str, float]:
 
 
 def _analyze_with_groq(text: str) -> dict | None:
+
     if not GROQ_API_KEY:
+        print("ERROR: Groq API key is missing in emotion_model.py")
         return None
 
     prompt = f"""
@@ -154,7 +157,16 @@ Return ONLY valid JSON:
 
 Text:
 "{text}"
+
+IMPORTANT:
+- Include all 28 emotion categories in all_scores.
+- Every category must have a numerical score between 0 and 1.
+- The sum of all scores must equal 1.
+- Do not omit any emotion.
+- Return the complete JSON object.
+- Do not stop before closing all JSON brackets.
 """
+
     try:
         resp = requests.post(
             GROQ_URL,
@@ -163,27 +175,33 @@ Text:
                 "Content-Type": "application/json",
             },
             json={
-                "model": "llama-3.3-70b-versatile",
+                "model": "openai/gpt-oss-20b",
                 "messages": [
                     {"role": "user", "content": prompt}
                 ],
                 "temperature": 0.1,
-                "max_tokens": 400,
+                "max_tokens": 1500,
             },
             timeout=15,
         )
 
+        print("GROQ RESPONSE STATUS:", resp.status_code)
+        print("GROQ RESPONSE BODY:", resp.text[:1000])
+
         if resp.status_code != 200:
-            logger.error(f"Groq error: {resp.text}")
+            print("GROQ API REQUEST FAILED")
             return None
 
         raw = resp.json()["choices"][0]["message"]["content"].strip()
+        print("GROQ AI RESPONSE:", raw[:1000])
         raw = re.sub(r"```json|```", "", raw).strip()
 
         try:
             data = json.loads(raw)
-        except json.JSONDecodeError:
-            logger.error(f"JSON parsing failed: {raw}")
+        except json.JSONDecodeError as e:
+            print("JSON ERROR:", e)
+            print("RAW RESPONSE LENGTH:", len(raw))
+            print("RAW RESPONSE END:", raw[-300:])
             return None
 
         emotion = data.get("emotion", "neutral")
@@ -191,7 +209,7 @@ Text:
         if emotion not in EMOTIONS:
             emotion = "neutral"
 
-        scores = data.get("all_scores", {})
+        scores = data.get("all_scores", dict())
 
         clean_scores = {}
 
@@ -229,7 +247,7 @@ Text:
         }
 
     except Exception as e:
-        logger.error(f"Groq exception: {e}")
+        print("GROQ EXCEPTION:", repr(e))
         return None
 
 

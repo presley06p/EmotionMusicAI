@@ -3,12 +3,29 @@ Emotion-Based Music Recommendation System
 Main Flask Application Entry Point
 """
 
+# Standard Python imports
 import os
 import json
 import base64
 import logging
+import tempfile
+import subprocess
+from pathlib import Path
+
+# Environment variables
+from dotenv import load_dotenv
+
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env", override=True)
 from datetime import datetime, timedelta
 from functools import wraps
+
+# Third-party imports
+import imageio_ffmpeg
+from flask import request, jsonify
+
+# Project imports
+from models.voice_emotion import detect_voice_emotion
 
 from flask import (
     Flask, render_template, request, redirect, url_for,
@@ -105,6 +122,9 @@ def login():
     return render_template("login.html")
 
 
+
+
+
 @app.route("/logout")
 def logout():
     session.clear()
@@ -162,6 +182,12 @@ def dashboard():
         weekly=weekly
     )
 
+# Load Spotify credentials
+CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
+CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
+
+print("CLIENT_ID loaded:", bool(CLIENT_ID))
+print("CLIENT_SECRET loaded:", bool(CLIENT_SECRET))
 
 @app.route("/detect")
 @login_required
@@ -169,6 +195,7 @@ def detect():
     ai_key = bool(os.environ.get("GROQ_API_KEY"))
     spotify_ok = has_credentials()
     return render_template("emotion_detection.html", user=_current_user(), ai_enabled=ai_key, spotify_enabled=spotify_ok)
+
 
 
 # ── API: Text Emotion ─────────────────────────────────────────────────────────
@@ -339,5 +366,101 @@ def _current_user():
 with app.app_context():
     init_db()
 
+
+@app.route('/analyze-voice', methods=['POST'])
+def analyze_voice():
+    webm_path = None
+    wav_path = None
+
+    if 'audio' not in request.files:
+        return jsonify({"error": "No audio file received"}), 400
+
+    audio_file = request.files['audio']
+
+    try:
+        # Save browser recording as WebM
+        with tempfile.NamedTemporaryFile(
+            suffix='.webm', delete=False
+        ) as temp:
+            audio_file.save(temp.name)
+            webm_path = temp.name
+
+        # Create temporary WAV file
+        with tempfile.NamedTemporaryFile(
+            suffix='.wav', delete=False
+        ) as temp:
+            wav_path = temp.name
+
+        # Convert WebM to WAV using FFmpeg
+        ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+
+        subprocess.run(
+            [
+                ffmpeg_exe,
+                "-y",
+                "-i", webm_path,
+                "-vn",
+                "-ac", "1",
+                "-ar", "16000",
+                "-c:a", "pcm_s16le",
+                "-f", "wav",
+                wav_path
+            ],
+            check=True,
+            capture_output=True,
+            text=True
+        )
+
+        # Detect emotion
+        result = detect_voice_emotion(wav_path)
+
+        # Fetch Spotify songs based on detected voice emotion
+        tracks = search_tracks_by_emotion(result["emotion"])
+
+        # Save voice emotion to history
+        db = get_db()
+        db.execute(
+            """INSERT INTO emotion_history
+               (user_id, emotion, confidence, source, timestamp)
+               VALUES (?,?,?,?,?)""",
+            (
+                session["user_id"],
+                result["emotion"],
+                result["confidence"],
+                "voice",
+                datetime.utcnow()
+            )
+        )
+        db.commit()
+
+        return jsonify({
+            "success": True,
+            "emotion": result["emotion"],
+            "confidence": result["confidence"],
+            "method": "wav2vec2",
+            "tracks": tracks
+        })
+
+    except subprocess.CalledProcessError as e:
+        app.logger.error("FFmpeg error: %s", e.stderr)
+        return jsonify({
+            "success": False,
+            "error": "Audio conversion failed."
+        }), 400
+
+    except Exception as e:
+        app.logger.exception("Voice analysis failed")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+    finally:
+        for path in [webm_path, wav_path]:
+            if path and os.path.exists(path):
+                os.remove(path)
+
+
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
+

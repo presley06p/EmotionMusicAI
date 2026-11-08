@@ -10,8 +10,14 @@ python-dotenv==1.0.1
 gunicorn==22.0.0
 
 # ── Notes ─────────────────────────────────────────────────────────────────
-# AI emotion analysis (text + face) is powered by the Claude API.
+# AI emotion analysis (text + face) is powered by the Grok API
 # Set ANTHROPIC_API_KEY in your environment — no TensorFlow/OpenCV needed.
 #
 # Spotify integration uses the standard `requests` library.
 # Set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET for live track search.
+librosa
+transformers
+torch
+torchaudio
+soundfile
+numpy
